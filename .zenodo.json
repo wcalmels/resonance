@@ -1,0 +1,29 @@
+{
+  "title": "Resonance: Task-Specialized LLM Orchestration with Minimal Context for Token-Efficient Code Generation",
+  "version": "0.2.0",
+  "description": "Editor-agnostic research artifact combining specialized LLM bots, deterministic minimal-context extraction (ContextSelector), and parallel orchestration. Includes academic preprint (paper/PAPER.md), reproducible offline benchmarks, VS Code extension, and Cursor skill. Version 0.2.0.",
+  "upload_type": "software",
+  "publication_date": "2026-06-11",
+  "creators": [
+    {
+      "name": "Calmels, W.",
+      "affiliation": "Independent Researcher"
+    }
+  ],
+  "keywords": [
+    "large language models",
+    "code generation",
+    "multi-agent orchestration",
+    "token efficiency",
+    "software engineering",
+    "reproducible research"
+  ],
+  "license": "mit",
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/wcalmels/resonance",
+      "scheme": "url"
+    }
+  ]
+}
