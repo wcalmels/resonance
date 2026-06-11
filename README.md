@@ -103,6 +103,7 @@ Details: [editors/README.md](editors/README.md)
 | [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | Evaluation protocol |
 | [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md) | Replication guide |
 | [docs/ETHICS.md](docs/ETHICS.md) | Responsible use |
+| [docs/ZENODO.md](docs/ZENODO.md) | DOI registration (Zenodo) |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines |
 
