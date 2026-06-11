@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resonance"
+version = "0.2.0"
+description = "Specialized AI bots with minimal token context"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "anthropic>=0.18.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+resonance = "resonance.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["resonance*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

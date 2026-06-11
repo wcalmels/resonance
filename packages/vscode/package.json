@@ -1,0 +1,50 @@
+{
+  "name": "resonance",
+  "displayName": "Resonance",
+  "description": "Specialized AI bots for code generation with minimal token usage",
+  "version": "0.2.0",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "resonance.generateModule",
+        "title": "Resonance: Generate Module"
+      },
+      {
+        "command": "resonance.generateTests",
+        "title": "Resonance: Generate Tests for Current File"
+      },
+      {
+        "command": "resonance.generateEndpoint",
+        "title": "Resonance: Generate API Endpoint"
+      },
+      {
+        "command": "resonance.showTokenStats",
+        "title": "Resonance: Show Token Usage Stats"
+      }
+    ],
+    "configuration": {
+      "title": "Resonance",
+      "properties": {
+        "resonance.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API key (or set ANTHROPIC_API_KEY env var)"
+        },
+        "resonance.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Python executable with resonance installed (default: python, or py -3 on Windows if python is missing)"
+        },
+        "resonance.showTokenStats": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show token usage after each generation"
+        }
+      }
+    }
+  }
+}
