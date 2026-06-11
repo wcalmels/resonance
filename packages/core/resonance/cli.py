@@ -8,6 +8,8 @@ import sys
 import time
 from pathlib import Path
 
+# asyncio used by cmd_generate, cmd_module, cmd_pipeline
+
 from resonance.bots import BOTS
 from resonance.context import ContextMode, ContextSelector
 from resonance.engine import (
@@ -18,6 +20,7 @@ from resonance.engine import (
     run_parallel,
     save_results,
 )
+from resonance.phi47_bridge import print_pipeline_report, run_pipeline
 
 
 def _read_text(path: Path) -> str:
@@ -131,6 +134,45 @@ def cmd_generate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pipeline(args: argparse.Namespace) -> int:
+    spec = ProjectSpec(
+        name=args.name or "Generated Module",
+        description=args.description,
+        requirements=args.requirement or [],
+        output_dir=args.output_dir,
+    )
+
+    try:
+        report = asyncio.run(
+            run_pipeline(
+                spec,
+                phi_threshold=args.phi_threshold,
+                max_refinements=args.max_refinements,
+                style_file=args.file,
+            )
+        )
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        import json
+
+        print(json.dumps(report.to_dict(), indent=2))
+    else:
+        print_pipeline_report(report)
+
+    if report.system_phi_after < args.phi_threshold:
+        print(
+            f"WARNING: system Phi {report.system_phi_after:.3f} still below "
+            f"threshold {args.phi_threshold}",
+            file=sys.stderr,
+        )
+        return 2 if args.strict else 0
+
+    return 0
+
+
 def cmd_module(args: argparse.Namespace) -> int:
     spec = ProjectSpec(
         name=args.name or "Generated Module",
@@ -206,6 +248,39 @@ def build_parser() -> argparse.ArgumentParser:
         "--file", help="Optional style reference file (minimal context only)"
     )
     module_parser.set_defaults(func=cmd_module)
+
+    pipeline_parser = sub.add_parser(
+        "pipeline",
+        help="Resonance + Phi47: generate module, analyze Phi, refine weak files",
+    )
+    pipeline_parser.add_argument("--description", required=True, help="Module description")
+    pipeline_parser.add_argument("--name", default="Generated Module")
+    pipeline_parser.add_argument(
+        "--requirement", action="append", dest="requirement", default=[]
+    )
+    pipeline_parser.add_argument("--output-dir", default="output/module")
+    pipeline_parser.add_argument(
+        "--file", help="Optional style reference file (minimal context)"
+    )
+    pipeline_parser.add_argument(
+        "--phi-threshold",
+        type=float,
+        default=0.5,
+        help="Minimum Phi; files below get refined (default: 0.5)",
+    )
+    pipeline_parser.add_argument(
+        "--max-refinements",
+        type=int,
+        default=2,
+        help="Max refinement passes per weak file (default: 2)",
+    )
+    pipeline_parser.add_argument("--json", action="store_true", help="Output JSON report")
+    pipeline_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit code 2 if system Phi below threshold after pipeline",
+    )
+    pipeline_parser.set_defaults(func=cmd_pipeline)
 
     return parser
 
