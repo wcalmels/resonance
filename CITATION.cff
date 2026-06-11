@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software in academic work, please cite it as below."
 type: software
 title: "Resonance: Task-Specialized LLM Orchestration with Minimal Context for Token-Efficient Code Generation"
-version: 0.2.0
+version: 0.2.1
 date-released: 2026-06-11
 license: MIT
 abstract: >-
@@ -16,6 +16,9 @@ authors:
     orcid: https://orcid.org/0000-0000-0000-0000
 repository-code: https://github.com/wcalmels/resonance
 url: https://github.com/wcalmels/resonance
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.20648248
 keywords:
   - large language models
   - code generation
@@ -24,11 +27,12 @@ keywords:
   - software engineering
   - reproducible research
 preferred-citation:
-  type: article
-  title: "Resonance: Orquestación de LLMs especializados con contexto mínimo para generación de código eficiente en tokens"
+  type: software
+  title: "Resonance: Task-Specialized LLM Orchestration with Minimal Context for Token-Efficient Code Generation"
   authors:
     - family-names: Calmels
       given-names: W.
   year: 2026
-  doi: 10.5281/zenodo.0000000
-  notes: "Preprint. See paper/PAPER.md. Update DOI after Zenodo archive."
+  doi: 10.5281/zenodo.20648248
+  url: https://doi.org/10.5281/zenodo.20648248
+  notes: "Concept DOI (all versions): 10.5281/zenodo.20648247. Preprint: paper/PAPER.md"

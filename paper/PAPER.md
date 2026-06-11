@@ -3,6 +3,7 @@
 **Versión:** 0.2.0 (preprint)  
 **Fecha:** Junio 2026  
 **Repositorio:** https://github.com/wcalmels/resonance  
+**DOI:** https://doi.org/10.5281/zenodo.20648248  
 **Licencia del software:** MIT  
 **Licencia del documento:** CC BY 4.0
 
@@ -455,11 +456,15 @@ python benchmarks.py
   author       = {Calmels, W. and Resonance Contributors},
   title        = {Resonance: Task-Specialized LLM Orchestration with Minimal Context},
   year         = {2026},
+  doi          = {10.5281/zenodo.20648248},
   url          = {https://github.com/wcalmels/resonance},
-  version      = {0.2.0},
+  version      = {0.2.1},
   license      = {MIT}
 }
 ```
+
+**DOI:** https://doi.org/10.5281/zenodo.20648248  
+**Concept DOI (todas las versiones):** https://doi.org/10.5281/zenodo.20648247
 
 También disponible en `CITATION.cff` en la raíz del repositorio.
 

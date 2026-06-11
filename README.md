@@ -3,7 +3,7 @@
 [![CI](https://github.com/wcalmels/resonance/actions/workflows/ci.yml/badge.svg)](https://github.com/wcalmels/resonance/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![DOI](https://img.shields.io/badge/DOI-pending-Zenodo-blue)](https://zenodo.org/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20648248.svg)](https://doi.org/10.5281/zenodo.20648248)
 
 **Task-specialized LLM orchestration with minimal context for token-efficient code generation.**
 
@@ -103,7 +103,7 @@ Details: [editors/README.md](editors/README.md)
 | [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | Evaluation protocol |
 | [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md) | Replication guide |
 | [docs/ETHICS.md](docs/ETHICS.md) | Responsible use |
-| [docs/ZENODO.md](docs/ZENODO.md) | DOI registration (Zenodo) |
+| [docs/ZENODO.md](docs/ZENODO.md) | Zenodo archive ([DOI](https://doi.org/10.5281/zenodo.20648248)) |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines |
 
@@ -116,8 +116,9 @@ Details: [editors/README.md](editors/README.md)
   author  = {Calmels, W. and Resonance Contributors},
   title   = {Resonance: Task-Specialized LLM Orchestration with Minimal Context},
   year    = {2026},
+  doi     = {10.5281/zenodo.20648248},
   url     = {https://github.com/wcalmels/resonance},
-  version = {0.2.0},
+  version = {0.2.1},
   license = {MIT}
 }
 ```

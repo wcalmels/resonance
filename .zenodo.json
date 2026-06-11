@@ -1,6 +1,6 @@
 {
   "title": "Resonance: Task-Specialized LLM Orchestration with Minimal Context for Token-Efficient Code Generation",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Editor-agnostic research artifact combining specialized LLM bots, deterministic minimal-context extraction (ContextSelector), and parallel orchestration. Includes academic preprint (paper/PAPER.md), reproducible offline benchmarks, VS Code extension, and Cursor skill. Version 0.2.0.",
   "upload_type": "software",
   "publication_date": "2026-06-11",

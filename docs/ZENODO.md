@@ -1,63 +1,37 @@
-# Archivar en Zenodo (DOI permanente)
+# Zenodo archive
 
-Zenodo genera un DOI al archivar cada **GitHub Release**. Este repositorio incluye `.zenodo.json` para metadatos automáticos.
+Resonance is permanently archived on Zenodo.
 
-## Paso 1 — Conectar GitHub (una sola vez)
+| | |
+|---|---|
+| **Version DOI** | [10.5281/zenodo.20648248](https://doi.org/10.5281/zenodo.20648248) |
+| **Concept DOI** | [10.5281/zenodo.20648247](https://doi.org/10.5281/zenodo.20648247) |
+| **Record** | https://zenodo.org/records/20648248 |
+| **Version** | 0.2.1 |
+| **Released** | 2026-06-11 |
 
-1. Inicia sesión en [zenodo.org](https://zenodo.org) (usa cuenta GitHub si prefieres).
-2. Ve a **Account → GitHub** (o directo: https://zenodo.org/account/settings/github/ ).
-3. Pulsa **Sync** para ver tus repositorios.
-4. Activa el interruptor junto a **`wcalmels/resonance`**.
+Use the **concept DOI** when you want citations to resolve to the latest version. Use the **version DOI** when citing this specific release.
 
-## Paso 2 — Release en GitHub
-
-Ya existe el release **v0.2.0** en:
-
-https://github.com/wcalmels/resonance/releases/tag/v0.2.0
-
-Si Zenodo estaba conectado **antes** del release, el archivo se crea en minutos. Si conectaste **después**, crea un release nuevo (p. ej. v0.2.1) o en Zenodo usa **Re-sync** en el repositorio.
-
-## Paso 3 — Obtener el DOI
-
-1. En Zenodo: **Uploads** → busca "Resonance".
-2. Copia el DOI (formato `10.5281/zenodo.XXXXXXX`).
-3. Actualiza `CITATION.cff`:
-
-```yaml
-preferred-citation:
-  doi: 10.5281/zenodo.XXXXXXX   # reemplazar con DOI real
-```
-
-4. Actualiza el badge en `README.md`:
-
-```markdown
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
-```
-
-5. Commit y push los cambios.
-
-## Verificación
-
-- Registro Zenodo: `https://doi.org/10.5281/zenodo.XXXXXXX`
-- GitHub muestra el DOI en la release si Zenodo comentó o si lo añades manualmente a las release notes.
-
-## Citar el software
+## Cite
 
 ```bibtex
 @software{resonance2026,
-  author    = {Calmels, W. and {Resonance Contributors}},
-  title     = {Resonance: Task-Specialized LLM Orchestration with Minimal Context},
-  year      = {2026},
-  version   = {0.2.0},
-  doi       = {10.5281/zenodo.XXXXXXX},
-  url       = {https://github.com/wcalmels/resonance}
+  author  = {Calmels, W. and {Resonance Contributors}},
+  title   = {Resonance: Task-Specialized LLM Orchestration with Minimal Context},
+  year    = {2026},
+  doi     = {10.5281/zenodo.20648248},
+  url     = {https://github.com/wcalmels/resonance},
+  version = {0.2.1}
 }
 ```
 
-## Problemas frecuentes
+Machine-readable citation: [`CITATION.cff`](../CITATION.cff) at repository root.
 
-| Problema | Solución |
-|----------|----------|
-| No aparece en Zenodo | Verifica que el repo esté activado en GitHub settings de Zenodo |
-| Release sin archivo | Crea un nuevo tag/release después de activar Zenodo |
-| DOI diferente por versión | Normal: cada release tiene su propio DOI; usa *concept DOI* para citar siempre la última versión |
+## New releases
+
+1. Enable `wcalmels/resonance` at https://zenodo.org/account/settings/github/
+2. Publish a new GitHub Release (e.g. `v0.2.2`)
+3. Zenodo creates a new version DOI under the same concept DOI
+4. Update `CITATION.cff` and `README.md` with the new version DOI
+
+Metadata for Zenodo is defined in [`.zenodo.json`](../.zenodo.json).
