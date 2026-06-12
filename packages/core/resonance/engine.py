@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from resonance.bots import BOTS, MODEL
+from resonance.output_clean import clean_llm_output
 
 try:
     from anthropic import Anthropic
@@ -82,7 +83,7 @@ def run_bot(
             system=bot["system"],
             messages=messages,
         )
-        output = response.content[0].text
+        output = clean_llm_output(response.content[0].text)
         success = True
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
