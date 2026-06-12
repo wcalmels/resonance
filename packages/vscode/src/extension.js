@@ -1,4 +1,4 @@
-// Resonance VS Code Extension — thin wrapper around packages/core CLI
+// Resonance VS Code Extension — CLI wrapper + Phi47 synergy
 
 const vscode = require('vscode');
 const { exec } = require('child_process');
@@ -17,7 +17,7 @@ const tokenStats = {
         const sent = this.sessions.reduce((a, s) => a + s.sentTokens, 0);
         const saved = total - sent;
         const pct = total > 0 ? Math.round((saved / total) * 100) : 0;
-        return `Sessions: ${this.sessions.length} | Tokens saved: ${saved.toLocaleString()} (${pct}%) | Sent: ${sent.toLocaleString()} vs full: ${total.toLocaleString()}`;
+        return `Sessions: ${this.sessions.length} | Tokens saved: ${saved.toLocaleString()} (${pct}%)`;
     }
 };
 
@@ -27,7 +27,7 @@ function getConfig() {
 
 function getPython() {
     const configured = getConfig().get('pythonPath');
-    if (configured) return configured;
+    if (configured?.trim()) return configured.trim();
     return process.platform === 'win32' ? 'py -3' : 'python3';
 }
 
@@ -35,40 +35,61 @@ function getApiKey() {
     return getConfig().get('apiKey') || process.env.ANTHROPIC_API_KEY || '';
 }
 
-function runResonance(args, env = {}) {
+function buildCmd(module, args) {
+    const python = getPython();
+    const body = `-m ${module} ${args}`;
+    return python.includes(' ') ? `${python} ${body}` : `"${python}" ${body}`;
+}
+
+function runCmd(module, args, env = {}, timeout = 180000) {
     return new Promise((resolve, reject) => {
-        const python = getPython();
-        const cmd = `"${python}" -m resonance ${args}`;
+        const cmd = buildCmd(module, args);
         exec(cmd, {
-            timeout: 120000,
+            timeout,
             env: { ...process.env, ...env },
-            cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+            cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+            maxBuffer: 10 * 1024 * 1024,
         }, (err, stdout, stderr) => {
-            if (err) reject(new Error(stderr || err.message));
+            if (err) reject(new Error(stderr || stdout || err.message));
             else resolve(stdout.trim());
         });
     });
 }
 
-function compareContext(filePath, mode) {
-    return runResonance(`context "${filePath}" --mode ${mode} --compare`);
+function runResonance(args, env = {}) {
+    return runCmd('resonance', args, env);
 }
 
-function extractContextToTemp(filePath, mode) {
-    const tmp = path.join(os.tmpdir(), `resonance_context_${Date.now()}.txt`);
-    const python = getPython();
-    const cmd = `"${python}" -m resonance context "${filePath}" --mode ${mode}`;
-
-    return new Promise((resolve, reject) => {
-        exec(cmd, { timeout: 30000 }, (err, stdout, stderr) => {
-            if (err) {
-                reject(new Error(stderr || err.message));
-                return;
+function handleError(err, packageHint) {
+    const msg = (err.message || '').toLowerCase();
+    if (msg.includes('modulenotfounderror') || msg.includes('no module named')) {
+        vscode.window.showErrorMessage(
+            `Resonance: Python package missing. Run: pip install ${packageHint}`,
+            'Copy command'
+        ).then(sel => {
+            if (sel === 'Copy command') {
+                vscode.env.clipboard.writeText(`pip install ${packageHint}`);
             }
-            fs.writeFileSync(tmp, stdout);
-            resolve(tmp);
         });
-    });
+        return;
+    }
+    vscode.window.showErrorMessage(`Resonance: ${err.message}`);
+}
+
+async function analyzeWithPhi47(targetPath) {
+    if (!getConfig().get('analyzeWithPhi47', true)) return;
+    try {
+        const out = await runCmd('phi47', `analyze "${targetPath}"`);
+        const phiMatch = out.match(/Phi=([0-9.]+)/);
+        if (phiMatch) {
+            vscode.window.showInformationMessage(
+                `Phi47 analysis: System/file Phi=${phiMatch[1]}`
+            );
+        }
+        vscode.commands.executeCommand('phi47.analyzeFile').catch(() => {});
+    } catch {
+        // Phi47 optional — ignore if not installed
+    }
 }
 
 function parseCompareOutput(output) {
@@ -86,11 +107,16 @@ function parseCompareOutput(output) {
     };
 }
 
+async function extractContextToTemp(filePath, mode) {
+    const tmp = path.join(os.tmpdir(), `resonance_context_${Date.now()}.txt`);
+    const out = await runResonance(`context "${filePath}" --mode ${mode}`);
+    fs.writeFileSync(tmp, out);
+    return tmp;
+}
+
 async function callGenerate(bot, task, filePath, mode, outputPath) {
     const apiKey = getApiKey();
-    if (!apiKey) {
-        throw new Error('No API key. Set resonance.apiKey or ANTHROPIC_API_KEY.');
-    }
+    if (!apiKey) throw new Error('No API key. Set resonance.apiKey or ANTHROPIC_API_KEY.');
 
     const contextFile = await extractContextToTemp(filePath, mode);
     const args = [
@@ -101,7 +127,8 @@ async function callGenerate(bot, task, filePath, mode, outputPath) {
         `--output "${outputPath}"`
     ].join(' ');
 
-    return runResonance(args, { ANTHROPIC_API_KEY: apiKey });
+    await runResonance(args, { ANTHROPIC_API_KEY: apiKey });
+    await analyzeWithPhi47(outputPath);
 }
 
 async function generateTests() {
@@ -114,27 +141,31 @@ async function generateTests() {
     const filePath = editor.document.fileName;
     const fileName = path.basename(filePath, '.py');
     const outputPath = path.join(path.dirname(filePath), `test_${fileName}.py`);
-    const stats = parseCompareOutput(await compareContext(filePath, 'tests'));
-    tokenStats.record(stats.fullTokens, stats.minimalTokens, 'generateTests');
-
-    const task = 'Generate a complete pytest test suite for this Python module. Cover happy path and error cases for each function/method.';
 
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: `Resonance: generating tests (~${stats.minimalTokens} tokens)`,
+        title: 'Resonance: generating tests...',
         cancellable: false
     }, async () => {
         try {
+            const compare = parseCompareOutput(
+                await runResonance(`context "${filePath}" --mode tests --compare`)
+            );
+            tokenStats.record(compare.fullTokens, compare.minimalTokens, 'generateTests');
+
+            const task = 'Generate a complete pytest test suite. Cover happy path and error cases.';
             await callGenerate('TestBot', task, filePath, 'tests', outputPath);
+
             const doc = await vscode.workspace.openTextDocument(outputPath);
             await vscode.window.showTextDocument(doc);
+
             if (getConfig().get('showTokenStats')) {
                 vscode.window.showInformationMessage(
-                    `Tests generated. Saved ~${stats.fullTokens - stats.minimalTokens} tokens (${stats.savedPercent}%).`
+                    `Tests generated. Saved ~${compare.savedPercent}% tokens vs full file.`
                 );
             }
         } catch (e) {
-            vscode.window.showErrorMessage(`Resonance error: ${e.message}`);
+            handleError(e, 'resonance');
         }
     });
 }
@@ -142,7 +173,7 @@ async function generateTests() {
 async function generateEndpoint() {
     const task = await vscode.window.showInputBox({
         prompt: 'Describe the endpoint',
-        placeHolder: 'e.g. POST /users/register — accept email+password, return JWT'
+        placeHolder: 'e.g. POST /users/register — email+password, return JWT'
     });
     if (!task) return;
 
@@ -153,15 +184,9 @@ async function generateEndpoint() {
         : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '.';
     const outputPath = path.join(outputDir, `${fileName}_endpoint.py`);
 
-    let stats = { fullTokens: 0, minimalTokens: 0, savedPercent: 0 };
-    if (filePath) {
-        stats = parseCompareOutput(await compareContext(filePath, 'endpoint'));
-        tokenStats.record(stats.fullTokens, stats.minimalTokens, 'generateEndpoint');
-    }
-
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: `Resonance: generating endpoint (~${stats.minimalTokens} tokens)`,
+        title: 'Resonance: generating endpoint...',
         cancellable: false
     }, async () => {
         try {
@@ -177,10 +202,12 @@ async function generateEndpoint() {
             }
 
             await runResonance(args, { ANTHROPIC_API_KEY: apiKey });
+            await analyzeWithPhi47(outputPath);
+
             const doc = await vscode.workspace.openTextDocument(outputPath);
             await vscode.window.showTextDocument(doc);
         } catch (e) {
-            vscode.window.showErrorMessage(`Resonance error: ${e.message}`);
+            handleError(e, 'resonance');
         }
     });
 }
@@ -188,7 +215,7 @@ async function generateEndpoint() {
 async function generateModule() {
     const description = await vscode.window.showInputBox({
         prompt: 'Describe the module to generate',
-        placeHolder: 'e.g. User authentication with JWT — register, login, get current user'
+        placeHolder: 'e.g. User authentication with JWT'
     });
     if (!description) return;
 
@@ -205,17 +232,69 @@ async function generateModule() {
 
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: 'Resonance: generating module (4 bots in parallel)',
+        title: 'Resonance: generating module (4 bots)...',
         cancellable: false
     }, async () => {
         try {
             const apiKey = getApiKey();
             const args = `generate --bot ALL --task "${description.replace(/"/g, '\\"')}" --output "${outputPath}"`;
             await runResonance(args, { ANTHROPIC_API_KEY: apiKey });
+            await analyzeWithPhi47(outputDir);
             await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(outputDir));
             vscode.window.showInformationMessage(`Module generated in ${outputDir}`);
         } catch (e) {
-            vscode.window.showErrorMessage(`Resonance error: ${e.message}`);
+            handleError(e, 'resonance');
+        }
+    });
+}
+
+async function runPipeline() {
+    const description = await vscode.window.showInputBox({
+        prompt: 'Module description (Resonance + Phi47 pipeline)',
+        placeHolder: 'e.g. User auth JWT — register, login, me endpoint'
+    });
+    if (!description) return;
+
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceRoot) {
+        vscode.window.showWarningMessage('Open a workspace first.');
+        return;
+    }
+
+    const outputDir = path.join(workspaceRoot, 'output',
+        description.split(' ').slice(0, 3).join('_').toLowerCase());
+    const phiThreshold = getConfig().get('phiThreshold', 0.5);
+
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: 'Resonance + Phi47: pipeline running...',
+        cancellable: false
+    }, async () => {
+        try {
+            const apiKey = getApiKey();
+            const args = [
+                'pipeline',
+                `--description "${description.replace(/"/g, '\\"')}"`,
+                `--output-dir "${outputDir}"`,
+                `--phi-threshold ${phiThreshold}`
+            ].join(' ');
+
+            const out = await runResonance(args, { ANTHROPIC_API_KEY: apiKey }, 300000);
+            const phiMatch = out.match(/System Phi:\s+([0-9.]+)\s*->\s*([0-9.]+)/);
+            const summary = phiMatch
+                ? `Pipeline done. Phi ${phiMatch[1]} → ${phiMatch[2]}. Files in ${outputDir}`
+                : `Pipeline done. Files in ${outputDir}`;
+
+            await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(outputDir));
+            vscode.window.showInformationMessage(summary, 'Analyze with Phi47').then(sel => {
+                if (sel === 'Analyze with Phi47') {
+                    runCmd('phi47', `analyze "${outputDir}"`).catch(() => {
+                        vscode.window.showWarningMessage('Install Phi47: pip install phi47-superpowers');
+                    });
+                }
+            });
+        } catch (e) {
+            handleError(e, 'resonance[phi47]');
         }
     });
 }
@@ -229,6 +308,7 @@ function activate(context) {
         vscode.commands.registerCommand('resonance.generateTests', generateTests),
         vscode.commands.registerCommand('resonance.generateEndpoint', generateEndpoint),
         vscode.commands.registerCommand('resonance.generateModule', generateModule),
+        vscode.commands.registerCommand('resonance.pipeline', runPipeline),
         vscode.commands.registerCommand('resonance.showTokenStats', showTokenStats)
     );
 }

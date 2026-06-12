@@ -85,11 +85,23 @@ python -m resonance generate \
 
 | Environment | Entry point |
 |-------------|-------------|
+| **VS Code / Cursor extension** | [packages/vscode](packages/vscode) — `resonance-0.2.1.vsix` |
+| **Phi47 synergy** | [docs/SYNERGY.md](docs/SYNERGY.md) |
 | Any terminal | `python -m resonance` |
-| Cursor | `.cursor/skills/resonance/SKILL.md` |
-| VS Code | `packages/vscode` |
+| Cursor skill | `.cursor/skills/resonance/SKILL.md` |
 | Claude Code | `CLAUDE.md` |
 | Other AI agents | `AGENTS.md` |
+
+### VS Code / Cursor
+
+```bash
+pip install resonance phi47-superpowers
+code --install-extension packages/vscode/resonance-0.2.1.vsix
+```
+
+Commands: **Resonance + Phi47: Generate Module with Quality Pipeline**, Generate Tests, Generate Module.
+
+Publish to Marketplace: [packages/vscode/PUBLISHING.md](packages/vscode/PUBLISHING.md)
 
 Details: [editors/README.md](editors/README.md)
 

@@ -46,3 +46,4 @@ resonance-vscode/
 
 # Node (vscode extension dev)
 node_modules/
+packages/vscode/node_modules/

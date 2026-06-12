@@ -1,29 +1,65 @@
 {
   "name": "resonance",
   "displayName": "Resonance",
-  "description": "Specialized AI bots for code generation with minimal token usage",
-  "version": "0.2.0",
+  "description": "Specialized AI bots for token-efficient code generation with Phi47 structural quality integration",
+  "version": "0.2.1",
+  "publisher": "wcalmels",
+  "icon": "images/resonance-icon.png",
   "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other"],
-  "activationEvents": [],
+  "categories": ["Other", "Machine Learning"],
+  "keywords": [
+    "ai",
+    "code generation",
+    "llm",
+    "anthropic",
+    "python",
+    "token efficiency",
+    "phi47"
+  ],
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wcalmels/resonance"
+  },
+  "bugs": {
+    "url": "https://github.com/wcalmels/resonance/issues"
+  },
+  "homepage": "https://github.com/wcalmels/resonance#readme",
+  "license": "MIT",
+  "activationEvents": ["onLanguage:python"],
   "main": "./src/extension.js",
+  "extensionRecommendations": [
+    "wcalmels.phi47-superpowers"
+  ],
   "contributes": {
     "commands": [
       {
+        "command": "resonance.pipeline",
+        "title": "Resonance + Phi47: Generate Module with Quality Pipeline",
+        "category": "Resonance"
+      },
+      {
         "command": "resonance.generateModule",
-        "title": "Resonance: Generate Module"
+        "title": "Resonance: Generate Module",
+        "category": "Resonance"
       },
       {
         "command": "resonance.generateTests",
-        "title": "Resonance: Generate Tests for Current File"
+        "title": "Resonance: Generate Tests for Current File",
+        "category": "Resonance"
       },
       {
         "command": "resonance.generateEndpoint",
-        "title": "Resonance: Generate API Endpoint"
+        "title": "Resonance: Generate API Endpoint",
+        "category": "Resonance"
       },
       {
         "command": "resonance.showTokenStats",
-        "title": "Resonance: Show Token Usage Stats"
+        "title": "Resonance: Show Token Usage Stats",
+        "category": "Resonance"
       }
     ],
     "configuration": {
@@ -37,14 +73,40 @@
         "resonance.pythonPath": {
           "type": "string",
           "default": "",
-          "description": "Python executable with resonance installed (default: python, or py -3 on Windows if python is missing)"
+          "description": "Python with resonance installed (default: python3 or py -3 on Windows)"
         },
         "resonance.showTokenStats": {
           "type": "boolean",
           "default": true,
-          "description": "Show token usage after each generation"
+          "description": "Show token savings notification after generation"
+        },
+        "resonance.analyzeWithPhi47": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run Phi47 analysis after generating code (requires phi47-superpowers)"
+        },
+        "resonance.phiThreshold": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Minimum Phi for pipeline refinement (Resonance + Phi47 command)"
         }
       }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "resonance.generateTests",
+          "when": "editorLangId == python",
+          "group": "resonance@1"
+        }
+      ]
     }
+  },
+  "scripts": {
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.24.0"
   }
 }

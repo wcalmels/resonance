@@ -1,43 +1,60 @@
 # Resonance + Phi47 Synergy
 
-## Install both
+Generate code with minimal tokens (Resonance), validate structure with IIT/Phi (Phi47).
+
+## Install (Python)
 
 ```bash
+pip install resonance phi47-superpowers
+# or editable dev install:
 pip install -e "packages/core[phi47]"
-# or separately:
-pip install -e packages/core
-pip install phi47-superpowers
 ```
 
-## Pipeline command
+Set `ANTHROPIC_API_KEY` for generation.
+
+## Install (VS Code / Cursor extensions)
+
+| Extension | Marketplace | Role |
+|-----------|-------------|------|
+| [Phi47 Superpowers](https://marketplace.visualstudio.com/items?itemName=wcalmels.phi47-superpowers) | Published | Analyze Phi, inline diagnostics |
+| Resonance | Upload `packages/vscode/resonance-0.2.1.vsix` or publish | Generate code, pipeline |
+
+Both extensions recommend each other when installed.
+
+## Commands in the editor
+
+| Palette command | Extension |
+|-----------------|-----------|
+| **Resonance + Phi47: Generate Module with Quality Pipeline** | Resonance |
+| **Phi47 + Resonance: Generate Module with Quality Pipeline** | Phi47 |
+| **Resonance: Generate Tests** | Resonance |
+| **Phi47: Analyze Current File** | Phi47 |
+
+## CLI pipeline
 
 ```bash
-py -3 -m resonance pipeline \
-  --description "User authentication with JWT — register, login, me" \
-  --requirement "bcrypt passwords" \
+python -m resonance pipeline \
+  --description "User authentication with JWT" \
   --output-dir output/auth \
   --phi-threshold 0.5
 ```
 
-### What it does
-
-1. **Resonance** — 4 bots in parallel (minimal context, fast)
-2. **Phi47** — analyzes each file locally (milliseconds, no API cost)
-3. **Resonance** — refines only files with low Phi or errors (0–2 passes)
-
-### Options
-
-| Flag | Default | Meaning |
-|------|---------|---------|
-| `--phi-threshold` | 0.5 | Minimum Phi per file |
-| `--max-refinements` | 2 | Max API refine passes per weak file |
-| `--strict` | off | Exit code 2 if system Phi still below threshold |
-| `--json` | off | Machine-readable report |
-
-### From Phi47
+Or from Phi47:
 
 ```bash
-phi47 analyze output/auth/
+phi47 pipeline "User authentication with JWT" -o output/auth
 ```
 
-Use as pre-commit gate after generation.
+### Workflow
+
+1. **Resonance** — 4 bots in parallel (minimal context)
+2. **Phi47** — analyzes each file locally (~ms, no API cost)
+3. **Resonance** — refines only files with low Phi (0–2 passes)
+
+## Settings
+
+| Setting | Extension | Default |
+|---------|-----------|---------|
+| `resonance.analyzeWithPhi47` | Resonance | `true` |
+| `resonance.phiThreshold` | Resonance | `0.5` |
+| `phi47.phiWarningThreshold` | Phi47 | `0.5` |
