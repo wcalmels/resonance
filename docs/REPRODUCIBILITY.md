@@ -9,6 +9,7 @@ This document describes how to reproduce all claims in `paper/PAPER.md` without 
 | Core package | `packages/core/` | No (except generation) |
 | Unit tests | `packages/core/tests/` | No |
 | Context benchmark | `benchmarks/benchmark_context.py` | **No** |
+| Pipeline benchmark | `benchmarks/benchmark_pipeline.py` | No (offline) / Yes (`--live`) |
 | API benchmarks | `benchmarks.py` | Yes |
 | Sample module | `examples/sample_module.py` | No |
 
@@ -26,7 +27,10 @@ cd resonance
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 # Unix:    source .venv/bin/activate
-pip install -e "packages/core[dev]"
+pip install -e "packages/core[dev,phi47]"
+```
+
+Or install Phi47 separately: `pip install phi47-superpowers`
 ```
 
 On Windows without `python` in PATH, use `py -3` instead of `python`.
@@ -55,7 +59,30 @@ pytest packages/core/tests/ -v --tb=short
 
 **Expected:** 9+ tests, 0 failures.
 
-## Claim 3: API speedup and parallelism
+## Claim 3: Pipeline analysis overhead (Resonance + Phi47)
+
+**Reproduce (offline, no API):**
+
+```bash
+pip install phi47-superpowers
+python benchmarks/benchmark_pipeline.py --runs 10
+```
+
+**Expected:** `benchmarks/results/pipeline_benchmark.json` with:
+
+- `analysis_median_ms` < 50 for 4 files (Phi47 is negligible vs generation)
+- `system_phi_after` > `system_phi_before` after simulated refinement
+- Zero-Phi zombie files decrease after refinement fixtures are applied
+
+**Optional live pipeline** (requires `ANTHROPIC_API_KEY`):
+
+```bash
+python benchmarks/benchmark_pipeline.py --live
+```
+
+Reports `generation_seconds`, `analysis_seconds`, `refinement_seconds`, and `phi_overhead_percent`.
+
+## Claim 4: API speedup and parallelism
 
 Requires `ANTHROPIC_API_KEY` in `.env`:
 

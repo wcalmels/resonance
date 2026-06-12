@@ -22,7 +22,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run: pip install -e "packages/core[dev]"
+        run: pip install -e "packages/core[dev,phi47]"
 
       - name: Run unit tests
         run: pytest packages/core/tests/ -v --tb=short
@@ -30,8 +30,13 @@ jobs:
       - name: Run offline context benchmark
         run: python benchmarks/benchmark_context.py
 
-      - name: Upload benchmark artifact
+      - name: Run offline pipeline benchmark
+        run: python benchmarks/benchmark_pipeline.py --runs 5
+
+      - name: Upload benchmark artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: context-benchmark-py${{ matrix.python-version }}
-          path: benchmarks/results/context_benchmark.json
+          name: benchmarks-py${{ matrix.python-version }}
+          path: |
+            benchmarks/results/context_benchmark.json
+            benchmarks/results/pipeline_benchmark.json

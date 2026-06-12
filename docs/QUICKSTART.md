@@ -136,6 +136,7 @@ python -m resonance generate \
 | Phi47 paper | [phi47-superpowers/paper](https://github.com/wcalmels/phi47-superpowers/tree/main/paper) |
 | Synergy details | [docs/SYNERGY.md](SYNERGY.md) |
 | Offline token benchmark | `python benchmarks/benchmark_context.py` |
+| Pipeline performance benchmark | `pip install phi47-superpowers && python benchmarks/benchmark_pipeline.py` |
 
 ---
 
