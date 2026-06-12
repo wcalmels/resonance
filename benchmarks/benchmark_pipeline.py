@@ -301,7 +301,7 @@ def main() -> int:
 
     report = {
         "benchmark": "resonance_phi47_pipeline",
-        "version": "0.2.1",
+        "version": "0.2.2",
         "system": system_info(),
         **result,
     }

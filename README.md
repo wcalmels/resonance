@@ -134,7 +134,7 @@ Details: [docs/SYNERGY.md](docs/SYNERGY.md) · [editors/README.md](editors/READM
   year    = {2026},
   doi     = {10.5281/zenodo.20648248},
   url     = {https://github.com/wcalmels/resonance},
-  version = {0.2.1},
+  version = {0.2.2},
   license = {MIT}
 }
 ```

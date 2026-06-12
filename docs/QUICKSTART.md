@@ -140,4 +140,4 @@ python -m resonance generate \
 
 ---
 
-**Release:** Phi47 v0.1.3 + Resonance v0.2.1 — both on VS Marketplace (June 2026).
+**Release:** Phi47 v0.1.3 + Resonance v0.2.2 (Python) / v0.2.1 (Marketplace extension).
