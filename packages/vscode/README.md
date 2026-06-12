@@ -1,5 +1,9 @@
 # Resonance
 
+[![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/wcalmels.resonance)](https://marketplace.visualstudio.com/items?itemName=wcalmels.resonance)
+
+**[Install from Marketplace](https://marketplace.visualstudio.com/items?itemName=wcalmels.resonance)**
+
 Specialized AI bots for **token-efficient** Python code generation. Uses minimal context (60–80% fewer input tokens) and parallel bot orchestration.
 
 Works in **VS Code** and **Cursor**. Integrates with **[Phi47 Superpowers](https://marketplace.visualstudio.com/items?itemName=wcalmels.phi47-superpowers)** for structural quality analysis.

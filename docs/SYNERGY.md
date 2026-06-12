@@ -17,7 +17,7 @@ Set `ANTHROPIC_API_KEY` for generation.
 | Extension | Marketplace | Role |
 |-----------|-------------|------|
 | [Phi47 Superpowers](https://marketplace.visualstudio.com/items?itemName=wcalmels.phi47-superpowers) | Published | Analyze Phi, inline diagnostics |
-| Resonance | Upload `packages/vscode/resonance-0.2.1.vsix` or publish | Generate code, pipeline |
+| [Resonance](https://marketplace.visualstudio.com/items?itemName=wcalmels.resonance) | Published | Generate code, pipeline |
 
 Both extensions recommend each other when installed.
 

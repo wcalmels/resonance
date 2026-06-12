@@ -1,6 +1,7 @@
 # Resonance
 
 [![CI](https://github.com/wcalmels/resonance/actions/workflows/ci.yml/badge.svg)](https://github.com/wcalmels/resonance/actions/workflows/ci.yml)
+[![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/wcalmels.resonance?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=wcalmels.resonance)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20648248.svg)](https://doi.org/10.5281/zenodo.20648248)
@@ -85,7 +86,7 @@ python -m resonance generate \
 
 | Environment | Entry point |
 |-------------|-------------|
-| **VS Code / Cursor extension** | [packages/vscode](packages/vscode) — `resonance-0.2.1.vsix` |
+| **VS Code / Cursor extension** | [Marketplace](https://marketplace.visualstudio.com/items?itemName=wcalmels.resonance) · [packages/vscode](packages/vscode) |
 | **Phi47 synergy** | [docs/SYNERGY.md](docs/SYNERGY.md) |
 | Any terminal | `python -m resonance` |
 | Cursor skill | `.cursor/skills/resonance/SKILL.md` |
@@ -94,16 +95,17 @@ python -m resonance generate \
 
 ### VS Code / Cursor
 
+**[Install from Marketplace](https://marketplace.visualstudio.com/items?itemName=wcalmels.resonance)** — search **Resonance** in Extensions (`Ctrl+Shift+X`).
+
 ```bash
 pip install resonance phi47-superpowers
-code --install-extension packages/vscode/resonance-0.2.1.vsix
 ```
+
+Pair with **[Phi47 Superpowers](https://marketplace.visualstudio.com/items?itemName=wcalmels.phi47-superpowers)** for the quality pipeline.
 
 Commands: **Resonance + Phi47: Generate Module with Quality Pipeline**, Generate Tests, Generate Module.
 
-Publish to Marketplace: [packages/vscode/PUBLISHING.md](packages/vscode/PUBLISHING.md)
-
-Details: [editors/README.md](editors/README.md)
+Details: [docs/SYNERGY.md](docs/SYNERGY.md) · [editors/README.md](editors/README.md)
 
 ---
 
