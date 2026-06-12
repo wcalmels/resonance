@@ -53,6 +53,12 @@ phi47 pipeline "User authentication with JWT" -o output/auth
 2. **Phi47** — analyzes each file locally (~ms, no API cost)
 3. **Resonance** — refines only files with low Phi (0–2 passes)
 
+## Meta-reasoning (v0.2.3+)
+
+The Python pipeline uses a **rule-based meta-policy** over Phi47 signals (Phi, fractal graph dimension, diagnostics) to decide **when** and **how much** to refine — skipping files that are already good and capping total refinement passes.
+
+Logs: `~/.resonance/meta_runs.jsonl`
+
 ## Settings
 
 | Setting | Extension | Default |

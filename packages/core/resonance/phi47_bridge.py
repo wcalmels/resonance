@@ -8,6 +8,10 @@ from pathlib import Path
 
 from resonance.context import ContextSelector
 from resonance.engine import ProjectSpec, generate, get_client, run_bot
+from resonance.meta.features import extract_file_signals
+from resonance.meta.logger import log_meta_decision
+from resonance.meta.planner import PlannedRefinement, build_refinement_plan
+from resonance.meta.policy_rules import MetaBudget, RuleBasedPolicy
 
 BOT_FOR_PREFIX = {
     "codebot": "CodeBot",
@@ -24,6 +28,7 @@ class FileReport:
     phi_after: float
     refinements: int
     diagnostics: list[dict] = field(default_factory=list)
+    meta_reason: str = ""
 
 
 @dataclass
@@ -38,6 +43,7 @@ class PipelineReport:
     refinement_seconds: float
     input_tokens: int
     output_tokens: int
+    meta_skipped: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -45,6 +51,7 @@ class PipelineReport:
             "system_phi_before": round(self.system_phi_before, 4),
             "system_phi_after": round(self.system_phi_after, 4),
             "total_refinements": self.total_refinements,
+            "meta_skipped": self.meta_skipped,
             "generation_seconds": round(self.generation_seconds, 2),
             "analysis_seconds": round(self.analysis_seconds, 4),
             "refinement_seconds": round(self.refinement_seconds, 2),
@@ -56,6 +63,7 @@ class PipelineReport:
                     "phi_before": round(f.phi_before, 4),
                     "phi_after": round(f.phi_after, 4),
                     "refinements": f.refinements,
+                    "meta_reason": f.meta_reason,
                     "diagnostics": f.diagnostics,
                 }
                 for f in self.files
@@ -82,6 +90,7 @@ def _phi_from_diags(diags) -> float:
 
 
 def _needs_refinement(diags, phi: float, threshold: float) -> bool:
+    """Legacy threshold check (pre-meta)."""
     if phi < threshold:
         return True
     return any(d.severity == "error" for d in diags)
@@ -108,15 +117,38 @@ def _feedback_task(description: str, diags) -> str:
 
 def analyze_directory(linter, output_dir: Path, threshold: float):
     reports = {}
+    policy = RuleBasedPolicy(phi_threshold=threshold)
+    budget = MetaBudget(max_total_passes=99)
     for path in sorted(output_dir.glob("*.py")):
         diags = linter.lint_file(str(path))
         phi = _phi_from_diags(diags)
-        reports[path] = (phi, diags, _needs_refinement(diags, phi, threshold))
+        signals = extract_file_signals(path, diags, phi, _bot_for_file(path))
+        needs = policy.decide(signals, budget).refine
+        reports[path] = (phi, diags, needs)
     return reports
 
 
 def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
+
+
+def _legacy_plan(
+    raw_analysis: list[tuple[Path, float, list, object]],
+    phi_threshold: float,
+    max_refinements: int,
+) -> dict[Path, PlannedRefinement]:
+    plan: dict[Path, PlannedRefinement] = {}
+    for path, phi, diags, signals in raw_analysis:
+        if _needs_refinement(diags, phi, phi_threshold):
+            plan[path] = PlannedRefinement(
+                path=path,
+                passes=max_refinements,
+                bot=_bot_for_file(path),
+                reason="legacy",
+                priority=0.0,
+                signals=signals,
+            )
+    return plan
 
 
 async def run_pipeline(
@@ -125,9 +157,12 @@ async def run_pipeline(
     phi_threshold: float = 0.5,
     max_refinements: int = 2,
     style_file: str | None = None,
+    use_meta: bool = True,
 ) -> PipelineReport:
     linter = _require_phi47()(phi_warning=phi_threshold)
     client = get_client()
+    policy = RuleBasedPolicy(phi_threshold=phi_threshold)
+    budget = MetaBudget(max_total_passes=max_refinements * 4)
 
     context = ""
     if style_file:
@@ -139,14 +174,26 @@ async def run_pipeline(
 
     output_dir = Path(spec.output_dir)
     t1 = time.time()
-    analysis = analyze_directory(linter, output_dir, phi_threshold)
+    raw_analysis: list[tuple[Path, float, list, object]] = []
+    for path in sorted(output_dir.glob("*.py")):
+        diags = linter.lint_file(str(path))
+        phi = _phi_from_diags(diags)
+        signals = extract_file_signals(path, diags, phi, _bot_for_file(path))
+        raw_analysis.append((path, phi, diags, signals))
     analysis_seconds = time.time() - t1
+
+    if use_meta:
+        plan_list = build_refinement_plan(raw_analysis, policy, budget)
+    else:
+        plan_list = list(_legacy_plan(raw_analysis, phi_threshold, max_refinements).values())
+    plan_map = {item.path: item for item in plan_list}
 
     file_reports: list[FileReport] = []
     total_in = total_out = total_refs = 0
+    meta_skipped = 0
     refine_seconds = 0.0
 
-    for path, (phi_start, diags, needs) in analysis.items():
+    for path, phi_start, diags, signals in raw_analysis:
         phi_current = phi_start
         refs = 0
         diag_dicts = [
@@ -154,25 +201,60 @@ async def run_pipeline(
             for d in diags[:6]
         ]
 
-        if needs and max_refinements > 0:
-            bot = _bot_for_file(path)
-            for _ in range(max_refinements):
-                content = path.read_text(encoding="utf-8")
-                task = _feedback_task(spec.description, diags)
-                ctx = ContextSelector.for_module(content)
-                t2 = time.time()
-                result = run_bot(bot, task, ctx, client=client)
-                refine_seconds += time.time() - t2
-                total_in += result.input_tokens
-                total_out += result.output_tokens
-                if result.success:
-                    path.write_text(result.output, encoding="utf-8")
-                refs += 1
-                diags = linter.lint_file(str(path))
-                phi_current = _phi_from_diags(diags)
-                if not _needs_refinement(diags, phi_current, phi_threshold):
-                    break
+        planned = plan_map.get(path)
+        if planned is None:
+            skip_reason = policy.decide(signals, budget).reason
+            meta_skipped += 1
+            log_meta_decision(
+                output_dir=str(output_dir),
+                path=str(path),
+                action={"refine": False, "reason": skip_reason},
+                signals=signals.to_dict(),
+                phi_before=phi_start,
+            )
+            file_reports.append(
+                FileReport(
+                    path=str(path),
+                    phi_before=phi_start,
+                    phi_after=phi_current,
+                    refinements=0,
+                    diagnostics=diag_dicts,
+                    meta_reason=skip_reason,
+                )
+            )
+            continue
 
+        bot = planned.bot
+        for _ in range(planned.passes):
+            if not budget.can_spend_passes():
+                break
+            task = _feedback_task(spec.description, diags)
+            ctx = ContextSelector.for_module(path.read_text(encoding="utf-8"))
+            t2 = time.time()
+            result = run_bot(bot, task, ctx, client=client)
+            refine_seconds += time.time() - t2
+            total_in += result.input_tokens
+            total_out += result.output_tokens
+            budget.charge(tokens=result.input_tokens + result.output_tokens)
+            if result.success:
+                path.write_text(result.output, encoding="utf-8")
+            refs += 1
+            budget.charge()
+            diags = linter.lint_file(str(path))
+            phi_current = _phi_from_diags(diags)
+            signals_after = extract_file_signals(path, diags, phi_current, bot)
+            if policy.should_stop_after_pass(signals_after, phi_start, phi_current):
+                break
+
+        log_meta_decision(
+            output_dir=str(output_dir),
+            path=str(path),
+            action={"refine": True, "reason": planned.reason, "passes": refs},
+            signals=signals.to_dict(),
+            phi_before=phi_start,
+            phi_after=phi_current,
+            refinements=refs,
+        )
         total_refs += refs
         file_reports.append(
             FileReport(
@@ -181,6 +263,7 @@ async def run_pipeline(
                 phi_after=phi_current,
                 refinements=refs,
                 diagnostics=diag_dicts,
+                meta_reason=planned.reason,
             )
         )
 
@@ -193,6 +276,7 @@ async def run_pipeline(
         system_phi_after=_mean(phis_after),
         files=file_reports,
         total_refinements=total_refs,
+        meta_skipped=meta_skipped,
         generation_seconds=gen_seconds,
         analysis_seconds=analysis_seconds,
         refinement_seconds=refine_seconds,
@@ -217,6 +301,8 @@ def print_pipeline_report(report: PipelineReport) -> None:
         f"{report.system_phi_after:.3f}"
     )
     print(f"  Refinements:       {report.total_refinements}")
+    if report.meta_skipped:
+        print(f"  Meta skipped:      {report.meta_skipped} files")
     print(
         f"  Time gen/an/ref:   {report.generation_seconds:.1f}s / "
         f"{report.analysis_seconds:.3f}s / {report.refinement_seconds:.1f}s"
@@ -233,6 +319,6 @@ def print_pipeline_report(report: PipelineReport) -> None:
         name = Path(f.path).name
         print(
             f"  {name:<28} Phi {f.phi_before:.3f} -> {f.phi_after:.3f} "
-            f"({sign}{delta:.3f})  refs={f.refinements}"
+            f"({sign}{delta:.3f})  refs={f.refinements}  meta={f.meta_reason}"
         )
     print(f"{'=' * 60}\n")
