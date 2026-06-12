@@ -2,6 +2,8 @@
 
 Generate code with minimal tokens (Resonance), validate structure with IIT/Phi (Phi47).
 
+> **New here?** Start with **[QUICKSTART.md](QUICKSTART.md)** — install, editor commands, CLI, and troubleshooting in one page.
+
 ## Install (Python)
 
 ```bash

@@ -10,6 +10,8 @@
 
 Research preprint: **[paper/PAPER.md](paper/PAPER.md)** · Reproducibility: **[docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md)** · Cite: **[CITATION.cff](CITATION.cff)**
 
+**Synergy quick start (Resonance + Phi47):** **[docs/QUICKSTART.md](docs/QUICKSTART.md)** — both extensions on [VS Marketplace](https://marketplace.visualstudio.com/search?term=wcalmels&target=VSCode&category=All%20categories&sortBy=Relevance).
+
 ---
 
 ## Abstract
